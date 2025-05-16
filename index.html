@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datark 📊</title>
+    <link rel="icon" href="img/icono.ico" type="image/x-icon" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <script>
+        (function(){
+            emailjs.init("HS31_ROk9R6BaeuAI"); // reemplaza con tu User ID
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>Datark 📊</h1>
+        <p class="subtitle">Analiza datos, identifica patrones, descubre tendencias, mediante analisis estadisticos y clasifica clientes mediante AnalizaIA, una inteligencia artificial que analiza y clasifica los clientes de tu empresa</p>
+    </header>
+    
+    <div class="container">
+        <div class="card">
+            <h2>Importar Datos</h2>
+            <div class="upload-area" id="dropArea">
+                <div>
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#aaaaaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </div>
+                <h3>Arrastra aquí tu archivo Excel</h3>
+                <p>O haz clic para seleccionar un archivo</p>
+                <input type="file" id="fileInput" accept=".xlsx, .xls" />
+                <button class="btn" id="selectFileBtn">Seleccionar Archivo</button>
+            </div>
+            <!-- Almacenamiento -->
+            <div class="projects-section card hidden" id="projectsManager">
+                <h2>Mis Proyectos</h2>
+                
+                <div class="save-project-form">
+                    <h3>Guardar proyecto actual</h3>
+                    <div class="input-group">
+                        <input type="text" id="projectName" placeholder="Nombre del proyecto">
+                        <button class="btn" id="saveProjectBtn">Guardar</button>
+                    </div>
+                </div>
+                
+                <div class="projects-list-container">
+                    <h3>Proyectos guardados</h3>
+                    <ul class="projects-list" id="projectsList">
+                        <!-- Los proyectos se cargarán dinámicamente aquí -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Agregar estos botones en el div.card que contiene los resultados -->
+            <button class="btn" id="manageProjectsBtn">Gestionar Proyectos</button>
+        </div>
+        
+        <div id="loadingSection" class="loading hidden">
+            <div class="spinner"></div>
+            <p>Procesando datos...</p>
+        </div>
+        
+        <div id="resultsSection" class="hidden">
+            <div class="card">
+                <h2>Vista Previa de Datos</h2>
+                
+                <!-- Filtro de búsqueda -->
+                <div class="filter-container">
+                    <div class="input-group">
+                        <input type="text" id="searchInput" placeholder="Buscar datos...">
+                        <select id="filterColumn">
+                            <option value="all">Todas las columnas</option>
+                            <!-- Las opciones se cargarán dinámicamente -->
+                        </select>
+                        <button class="btn" id="searchBtn">Buscar</button>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead>
+                            <tr id="tableHeader"></tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                
+                <!-- Controles de paginación -->
+                <div class="pagination-controls">
+                    <button class="btn-small" id="prevPage">Anterior</button>
+                    <span id="pageInfo">Página 1 de 1</span>
+                    <button class="btn-small" id="nextPage">Siguiente</button>
+                </div>
+            </div>
+            
+            <!-- Tablas de frecuencia -->
+            <div class="card">
+                <h2>Tablas de Frecuencia</h2>
+                <div id="frequencyTables">
+                    <!-- Las tablas de frecuencia se generarán dinámicamente -->
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Gráficos de Análisis</h2>
+                <div id="chartsContainer">
+                    <!-- Los gráficos se generarán dinámicamente -->
+                </div>
+            </div>
+            
+            <div class="card analysis-section">
+                <h2>Análisis de Resultados</h2>
+                <button class="btn" onclick="clasificarClientes()">Clasificar Clientes</button>
+                <span class="tooltip-container">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">
+                Esta función clasifica a los clientes en 3 grupos según sus compras o totales. 
+                "Grupo 1": los clientes frecuentes "grupo 2": los clientes habituales y "Grupo 3": los clientes poco frecuentes
+                </span>
+                </span>
+                <div class="analysis-content" id="analysisContent"></div>
+                <button class="btn" id="downloadBtn">Descargar Informe</button>
+                <button id="clusterBtn" class="btn">Clasificar Datos (K-Means)</button>
+                <div class="card analysis-section">
+                <h2>Análisis con IA</h2>
+                <button class="btn" onclick="clasificarClientesConIA()">Clasificar Clientes (IA)</button>
+                <button class="btn" onclick="predecirTendencias()">Predecir Tendencias (IA)</button>
+                <div id="analysisContent"></div>
+                </div>
+                <button class="btn" id="sendEmailBtn">Enviar por Correo</button>
+                <form id="emailForm" class="hidden">
+                    <input type="hidden" name="to_email" value="agrupacionia2025@gmail.com">
+                    <textarea name="message" id="emailMessage"></textarea>
+                </form>
+                
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para ver detalles -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Detalles del Registro</h2>
+            <div id="modalContent"></div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>© 2025 Analizador de Tendencias de Mercado | Todos los derechos reservados</p>
+    </footer>
+    <script src="app.js"></script>
+<script>
+  function clasificarClientes() {
+    if (!processedData || processedData.length === 0) {
+      alert("No hay datos cargados para clasificar.");
+      return;
+    }
+
+    // Simulación simple: clasifica en 3 grupos según la cantidad de compras o total
+    const datos = processedData.map(cliente => {
+      const valor = parseFloat(cliente.compras || cliente.total || 0) || 0;
+      return { ...cliente, valor };
+    });
+
+    // Ordenar por valor
+    datos.sort((a, b) => a.valor - b.valor);
+
+    const grupoSize = Math.ceil(datos.length / 3);
+
+    for (let i = 0; i < datos.length; i++) {
+      const etiquetas = ["Cliente poco frecuente", "Cliente habitual", "Cliente frecuente"];
+      datos[i].grupo = etiquetas[Math.floor(i / grupoSize)];
+    }
+
+    // Mostrar en pantalla
+    const analisisDiv = document.getElementById("analysisContent");
+    analisisDiv.innerHTML = '<h3>Resultados de Clasificación</h3><ul>' + 
+      datos.map(c => `<li>${c.nombre || 'Cliente'} → ${c.grupo}</li>`).join('') + 
+      '</ul>';
+  }
+</script>
+</body>
+<div id="splashScreen">
+    <h1 class="splash-title">Datark 📊</h1>
+</div>
+</html>
